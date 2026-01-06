@@ -1,13 +1,23 @@
 import dotenv from "dotenv";
-import { connectDb } from "./src/config/db.js";
 import app from "./src/app.js";
+import pool from "./src/config/db.js";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const PORT = process.env.PORT_NUMBER || 5000;
 
-await connectDb();
+async function startServer() {
+  try {
+    await pool.query("SELECT 1");
+    console.log("✅ Database connected successfully");
 
-app.listen(PORT, () => {
-  console.log(`Server running at ${PORT}`);
-});
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ Database connection failed:", error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
