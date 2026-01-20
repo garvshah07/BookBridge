@@ -9,11 +9,11 @@ export const createUser = async (userData) => {
     if (!userData) {
       throw new Error("No user data provided");
     }
-    const { firstname, lastname, email, password, role } = userData;
+    const { firstname, lastname, email, password, role = "User" } = userData;
 
     const existingUser = await pool.query(
       `SELECT * FROM users WHERE email = $1`,
-      [email]
+      [email],
     );
 
     if (existingUser.rows.length > 0) {
@@ -27,7 +27,7 @@ export const createUser = async (userData) => {
       `INSERT INTO users ( firstname, lastname, email, password , role)
      VALUES ($1, $2, $3 , $4, $5)
      RETURNING id ,firstname, lastname, email, password, role`,
-      [firstname, lastname, email, hashedPassword, role]
+      [firstname, lastname, email, hashedPassword, role],
     );
 
     return await result.rows[0];
@@ -62,7 +62,7 @@ export const loginUser = async (userData) => {
         role: user.role || "user",
       },
       JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" },
     );
 
     return { token };
