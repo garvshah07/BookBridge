@@ -12,7 +12,7 @@ export const createUser = async (userData) => {
     const { firstname, lastname, email, password, role = "User" } = userData;
 
     const existingUser = await pool.query(
-      `SELECT * FROM users WHERE email = $1`,
+      `SELECT email FROM users WHERE email = $1`,
       [email],
     );
 
@@ -40,9 +40,10 @@ export const loginUser = async (userData) => {
   try {
     const { email, password } = userData;
 
-    const result = await pool.query(`SELECT * FROM users WHERE email = $1`, [
-      email,
-    ]);
+    const result = await pool.query(
+      `SELECT email FROM users WHERE email = $1`,
+      [email],
+    );
 
     if (result.rows.length === 0) {
       throw new Error("User not found");
