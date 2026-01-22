@@ -6,6 +6,11 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   service: process.env.SMTP_SERVICE,
+  port: 587,
+  secure: false,
+  requireTLS: true,
+  logger: true,
+  debug: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -37,3 +42,4 @@ export const sendOtpEmail = async (to, otp) => {
 
   return transporter.sendMail(mailOptions);
 };
+// bookbridge-backend-9h7p.onrender.com
