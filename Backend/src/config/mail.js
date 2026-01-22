@@ -1,28 +1,21 @@
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 
 dotenv.config();
 
-export const transporter = nodemailer.createTransport({
-  host: "smtp.sendgrid.net",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "apikey", // ⚠️ MUST be literal "apikey"
-    pass: process.env.SENDGRID_API_KEY,
-  },
-  connectionTimeout: 5000,
-  socketTimeout: 5000,
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /**
- * Send OTP Email
+ * Send OTP Email using SendGrid Web API (HTTPS)
  */
 export const sendOtpEmail = async (to, otp) => {
   try {
-    await transporter.sendMail({
-      from: `"BookBridge" <${process.env.SENDGRID_FROM_EMAIL}>`,
+    await sgMail.send({
       to,
+      from: {
+        email: process.env.SENDGRID_FROM_EMAIL,
+        name: "BookBridge",
+      },
       subject: "Your BookBridge Verification Code",
       html: `
         <div style="font-family: Arial, sans-serif;">
@@ -35,7 +28,7 @@ export const sendOtpEmail = async (to, otp) => {
       `,
     });
   } catch (error) {
-    console.error("SENDGRID OTP EMAIL ERROR:", error.message);
+    console.error("SENDGRID API ERROR:", error.response?.body || error.message);
     throw new Error("Email service unavailable");
   }
 };
