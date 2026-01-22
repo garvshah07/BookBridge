@@ -3,14 +3,13 @@ import nodemailer from "nodemailer";
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  service: process.env.SMTP_SERVICE,
-  port: 465,
-  secure: true,
+export const transporter = nodemailer.createTransport({
+  host: "smtp.sendgrid.net",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: "apikey", // ⚠️ MUST be literal "apikey"
+    pass: process.env.SENDGRID_API_KEY,
   },
   connectionTimeout: 5000,
   socketTimeout: 5000,
@@ -20,21 +19,23 @@ const transporter = nodemailer.createTransport({
  * Send OTP Email
  */
 export const sendOtpEmail = async (to, otp) => {
-  const mailOptions = {
-    from: `"BookBridge" <${process.env.SMTP_USER}>`,
-    to,
-    subject: "Your BookBridge Verification Code",
-    html: `
-      <div style="font-family: Arial, sans-serif;">
-        <h2>Email Verification</h2>
-        <p>Your OTP is:</p>
-        <h1 style="letter-spacing: 4px;">${otp}</h1>
-        <p>This OTP is valid for <b>5 minutes</b>.</p>
-        <p>If you did not request this, please ignore.</p>
-      </div>
-    `,
-  };
-
-  return transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail({
+      from: `"BookBridge" <${process.env.SENDGRID_FROM_EMAIL}>`,
+      to,
+      subject: "Your BookBridge Verification Code",
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>Email Verification</h2>
+          <p>Your OTP is:</p>
+          <h1 style="letter-spacing: 4px;">${otp}</h1>
+          <p>This OTP is valid for <b>5 minutes</b>.</p>
+          <p>If you did not request this, please ignore.</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error("SENDGRID OTP EMAIL ERROR:", error.message);
+    throw new Error("Email service unavailable");
+  }
 };
-// bookbridge-backend-9h7p.onrender.com

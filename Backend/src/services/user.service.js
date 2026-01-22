@@ -151,32 +151,64 @@ export const loginUser = async (userData) => {
 
 /* ===================== Forgot PASSWORD ===================== */
 
-export const forgotPassword = async ({ email }) => {
-  if (!email) throw new Error("Email is required");
+// export const forgotPassword = async ({ email }) => {
+//   if (!email) throw new Error("Email is required");
 
-  const user = await pool.query("SELECT id FROM users WHERE email = $1", [
+//   const user = await pool.query("SELECT id FROM users WHERE email = $1", [
+//     email,
+//   ]);
+
+//   if (user.rows.length === 0) {
+//     throw new Error("Email not registered");
+//   }
+
+//   const otp = generateOtp();
+//   const expires = new Date(Date.now() + 5 * 60 * 1000);
+
+//   await pool.query(
+//     `UPDATE users
+//      SET reset_otp = $1, reset_otp_expires = $2
+//      WHERE email = $3`,
+//     [otp, expires, email],
+//   );
+
+//   await sendOtpEmail(email, otp);
+
+//   return { message: "OTP sent to email" };
+// };
+
+export const forgotPassword = async (userData) => {
+  const { email } = userData;
+
+  if (!email) {
+    throw new Error("Email is required");
+  }
+
+  // Check if user exists
+  const userResult = await pool.query("SELECT id FROM users WHERE email = $1", [
     email,
   ]);
 
-  if (user.rows.length === 0) {
-    throw new Error("Email not registered");
+  if (userResult.rows.length === 0) {
+    throw new Error("User not found");
   }
 
   const otp = generateOtp();
-  const expires = new Date(Date.now() + 5 * 60 * 1000);
 
+  // OPTIONAL: store OTP in DB with expiry
   await pool.query(
-    `UPDATE users 
-     SET reset_otp = $1, reset_otp_expires = $2 
-     WHERE email = $3`,
-    [otp, expires, email],
+    "UPDATE users SET reset_otp = $1, reset_otp_expires = NOW() + INTERVAL '5 minutes' WHERE email = $2",
+    [otp, email],
   );
 
+  // Send email (SendGrid)
   await sendOtpEmail(email, otp);
 
-  return { message: "OTP sent to email" };
+  return {
+    success: true,
+    message: "OTP sent successfully",
+  };
 };
-
 /* ===================== VERIFY OTP ===================== */
 
 export const verifyResetOtp = async ({ email, otp }) => {
