@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import userRouter from "./routes/user.routes.js";
+import uploadFileRouter from "./routes/uploadfile.routes.js";
 import { authenticate } from "./middleware/auth.middleware.js";
 
 dotenv.config();
@@ -10,7 +11,11 @@ const app = express();
 
 app.use(express.json());
 
-const allowedOrigins = ["http://localhost:5000", "http://localhost:5173"];
+const allowedOrigins = [
+  "http://localhost:5000",
+  "http://localhost:5173",
+  "https://book-bridge-sage.vercel.app",
+];
 
 app.use(
   cors({
@@ -33,5 +38,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/users", userRouter);
+
+app.use("/api/file", authenticate, uploadFileRouter);
 
 export default app;
