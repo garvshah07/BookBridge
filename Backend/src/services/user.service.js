@@ -28,7 +28,7 @@ export const createUser = async (userData) => {
     const result = await pool.query(
       `INSERT INTO users (firstname, lastname, email, password, role)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, firstname, lastname, email, role`,
+       RETURNING user_id, firstname, lastname, email, role`,
       [firstname, lastname, email, hashedPassword, role],
     );
 
@@ -45,7 +45,7 @@ export const loginUser = async (userData) => {
     const { email, password } = userData;
 
     const result = await pool.query(
-      "SELECT id, email, password, role FROM users WHERE email = $1",
+      "SELECT user_id, email, password, role FROM users WHERE email = $1",
       [email],
     );
 
@@ -62,7 +62,7 @@ export const loginUser = async (userData) => {
 
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user.user_id,
         email: user.email,
         role: user.role || "user",
       },
@@ -78,31 +78,6 @@ export const loginUser = async (userData) => {
 
 /* ===================== Forgot PASSWORD ===================== */
 
-// export const forgotPassword = async ({ email }) => {
-//   if (!email) throw new Error("Email is required");
-
-//   const user = await pool.query("SELECT id FROM users WHERE email = $1", [
-//     email,
-//   ]);
-
-//   if (user.rows.length === 0) {
-//     throw new Error("Email not registered");
-//   }
-
-//   const otp = generateOtp();
-//   const expires = new Date(Date.now() + 5 * 60 * 1000);
-
-//   await pool.query(
-//     `UPDATE users
-//      SET reset_otp = $1, reset_otp_expires = $2
-//      WHERE email = $3`,
-//     [otp, expires, email],
-//   );
-
-//   await sendOtpEmail(email, otp);
-
-//   return { message: "OTP sent to email" };
-// };
 
 export const forgotPassword = async (userData) => {
   const { email } = userData;
@@ -112,9 +87,10 @@ export const forgotPassword = async (userData) => {
   }
 
   // Check if user exists
-  const userResult = await pool.query("SELECT id FROM users WHERE email = $1", [
-    email,
-  ]);
+  const userResult = await pool.query(
+    "SELECT user_id FROM users WHERE email = $1",
+    [email],
+  );
 
   if (userResult.rows.length === 0) {
     throw new Error("User not found");

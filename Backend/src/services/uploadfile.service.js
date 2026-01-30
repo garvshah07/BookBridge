@@ -1,20 +1,23 @@
-// import pool from "../../src/config/db.js";
+import pool from "../../src/config/db.js";
 
 /* ===================== UPLOAD File ===================== */
 
-export const UploadFile = async (file) => {
+export const UploadFile = async (file, user) => {
   try {
     if (!file) {
       throw new Error("No file received");
     }
+    const { userId } = user;
+    const { originalname, mimetype, buffer } = file;
 
-    return {
-      fileName: file.filename,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
-      path: file.path,
-    };
+    const result = await pool.query(
+      `INSERT INTO files (filename, mimetype, data , user_id)
+      VALUES ($1, $2, $3, $4)
+      RETURNING file_id;`,
+      [originalname, mimetype, buffer, userId],
+    );
+
+    return result.rows[0];
   } catch (error) {
     throw new Error("Error uploading file: " + error.message);
   }

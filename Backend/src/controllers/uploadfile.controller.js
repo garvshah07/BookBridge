@@ -2,7 +2,8 @@ import { UploadFile } from "../services/uploadfile.service.js";
 
 export const uploadFileController = async (req, res) => {
   try {
-    const fileData = UploadFile(req.file);
+    const user = await req.user;
+    const fileData = await UploadFile(req.file, user);
 
     return res.status(200).json({
       success: true,
