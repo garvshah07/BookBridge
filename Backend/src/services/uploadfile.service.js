@@ -30,7 +30,7 @@ export const GetAllUploadFileById = async (user) => {
     const { userId } = user;
 
     const result = await pool.query(
-      `SELECT file_id , filename FROM files WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT file_id, filename, mimetype, created_at FROM files WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId],
     );
 
