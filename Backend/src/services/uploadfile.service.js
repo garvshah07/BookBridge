@@ -34,7 +34,7 @@ export const GetAllUploadFileById = async (user) => {
       [userId],
     );
 
-    return result.rows;
+    return result.rows[0];
   } catch (error) {
     throw new Error("Error uploading file: " + error.message);
   }
