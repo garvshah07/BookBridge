@@ -9,6 +9,6 @@ import upload from "../config/multer.js";
 const router = express.Router();
 
 router.post("/upload", upload.single("file"), uploadFileController);
-router.post("/files", getAllUploadFileByIdController);
+router.get("/files", getAllUploadFileByIdController);
 
 export default router;
