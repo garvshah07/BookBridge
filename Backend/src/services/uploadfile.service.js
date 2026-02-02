@@ -22,3 +22,20 @@ export const UploadFile = async (file, user) => {
     throw new Error("Error uploading file: " + error.message);
   }
 };
+
+/* ===================== Get UPLOADED File ===================== */
+
+export const GetAllUploadFileById = async (user) => {
+  try {
+    const { userId } = user;
+
+    const result = await pool.query(
+      `SELECT file_id,filename, mimetype, data FROM files WHERE user_id = $1`,
+      [userId],
+    );
+
+    return result.rows;
+  } catch (error) {
+    throw new Error("Error uploading file: " + error.message);
+  }
+};

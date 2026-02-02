@@ -67,7 +67,6 @@ export const loginUser = async (userData) => {
         role: user.role || "user",
       },
       JWT_SECRET,
-      { expiresIn: "15m" },
     );
 
     return { token };
@@ -77,7 +76,6 @@ export const loginUser = async (userData) => {
 };
 
 /* ===================== Forgot PASSWORD ===================== */
-
 
 export const forgotPassword = async (userData) => {
   const { email } = userData;
