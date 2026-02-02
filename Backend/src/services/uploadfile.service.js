@@ -30,11 +30,11 @@ export const GetAllUploadFileById = async (user) => {
     const { userId } = user;
 
     const result = await pool.query(
-      `SELECT file_id,filename, mimetype, data FROM files WHERE user_id = $1`,
+      `SELECT file_id , filename FROM files WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId],
     );
 
-    return result.rows[0];
+    return result.rows;
   } catch (error) {
     throw new Error("Error uploading file: " + error.message);
   }
