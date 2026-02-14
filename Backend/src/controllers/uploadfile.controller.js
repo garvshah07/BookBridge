@@ -1,6 +1,7 @@
 import {
   UploadFile,
   GetAllUploadFileById,
+  TranslatedTextToPdf,
 } from "../services/uploadfile.service.js";
 
 export const uploadFileController = async (req, res) => {
@@ -31,6 +32,26 @@ export const getAllUploadFileByIdController = async (req, res) => {
       message: "File uploaded successfully",
       data: fileDataById,
     });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const translatedFileController = async (req, res) => {
+  try {
+    const { file_id, selectedLanguage } = req.body;
+
+    const pdfBuffer = await TranslatedTextToPdf(file_id, selectedLanguage);
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'attachment; filename="translated.pdf"',
+    });
+
+    return res.send(pdfBuffer);
   } catch (error) {
     return res.status(400).json({
       success: false,
