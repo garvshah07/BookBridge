@@ -7,10 +7,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const FONT_PATH = path.resolve(__dirname, "../fonts/hindi.ttf");
+const GUJARATI_FONT = path.resolve(__dirname, "../fonts/gujarati.ttf");
+const ENGLISH_FONT = path.resolve(__dirname, "../fonts/gujarati.ttf");
 
 /* ===================== PDF RECONSTRUCTION ===================== */
 
-const textToStructuredPDF = (text) => {
+const textToStructuredPDF = (text, language) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       margin: 50,
@@ -26,7 +28,14 @@ const textToStructuredPDF = (text) => {
 
     doc.pipe(stream);
 
-    doc.font(FONT_PATH);
+    const fontPath =
+      language === "Gujarati"
+        ? GUJARATI_FONT
+        : language === "Hindi"
+          ? FONT_PATH
+          : ENGLISH_FONT;
+
+    doc.font(fontPath);
 
     const lines = text.split("\n");
 

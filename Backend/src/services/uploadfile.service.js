@@ -146,7 +146,7 @@ export const TranslatedTextToPdf = async (id, selectedLanguage) => {
     }
 
     // Convert translated text into structured PDF
-    const pdfBuffer = await textToStructuredPDF(finalText);
+    const pdfBuffer = await textToStructuredPDF(finalText, selectedLanguage);
 
     return pdfBuffer;
   } catch (error) {
