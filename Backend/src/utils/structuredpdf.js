@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const FONT_PATH = path.resolve(__dirname, "../fonts/hindi.ttf");
 const GUJARATI_FONT = path.resolve(__dirname, "../fonts/gujarati.ttf");
-const ENGLISH_FONT = path.resolve(__dirname, "../fonts/gujarati.ttf");
+const ENGLISH_FONT = path.resolve(__dirname, "../fonts/english.ttf");
 
 /* ===================== PDF RECONSTRUCTION ===================== */
 

@@ -117,10 +117,10 @@ export const TranslatedTextToPdf = async (id, selectedLanguage) => {
           role: "user",
           content: `
                 TASK:
-                Translate the content of the PDF into fully Hindi while preserving layout line-by-line as closely as possible.
+                Translate the content of the PDF into fully ${selectedLanguage} while preserving layout line-by-line as closely as possible.
 
                 INSTRUCTIONS:
-                1. Extract and translate text into Hindi.
+                1. Extract and translate text into ${selectedLanguage}.
                 2. Preserve original meaning exactly.
                 3. Maintain structure, line order, and tables.
                 4. Do not merge lines or collapse columns.
