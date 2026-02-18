@@ -2,6 +2,7 @@ import {
   UploadFile,
   GetAllUploadFileById,
   TranslatedTextToPdf,
+  PdfToAudioService,
 } from "../services/uploadfile.service.js";
 
 export const uploadFileController = async (req, res) => {
@@ -52,6 +53,31 @@ export const translatedFileController = async (req, res) => {
     });
 
     return res.send(pdfBuffer);
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+export const pdfToAudioController = async (req, res) => {
+  try {
+    const { fileId, selectedLanguage } = req.body;
+
+    const audioBuffer = await PdfToAudioService(
+      fileId,
+      selectedLanguage
+    );
+
+    res.set({
+     "Content-Type": "audio/wav",
+"Content-Disposition": 'attachment; filename="document_audio.wav"',
+    });
+
+    return res.send(audioBuffer);
   } catch (error) {
     return res.status(400).json({
       success: false,

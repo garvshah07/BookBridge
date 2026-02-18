@@ -153,3 +153,49 @@ export const TranslatedTextToPdf = async (id, selectedLanguage) => {
     throw new Error("Error translating file: " + error.message);
   }
 };
+
+/* ===================== TEXT TO SPEECH ===================== */
+async function textToSpeechGroq(text) {
+  const response = await groq.audio.speech.create({
+    model: "canopylabs/orpheus-v1-english",
+    voice: "diana",
+    input: text.slice(0, 4000), // safety limit
+      response_format: "wav",
+  });
+
+  const audioArrayBuffer = await response.arrayBuffer();
+  return Buffer.from(audioArrayBuffer);
+}
+
+/* ===================== PDF TO AUDIO ===================== */
+export const PdfToAudioService = async (file_id, language) => {
+  try {
+    const parser = new SmartPDFParser();
+
+    const result = await pool.query(
+      `SELECT data FROM files WHERE file_id = $1`,
+      [file_id]
+    );
+
+    if (!result.rows.length) {
+      throw new Error("File not found");
+    }
+
+    const pdfresult = await parser.parse(result.rows[0].data);
+
+    const translatedText = await groqWithFallback([
+      {
+        role: "user",
+        content: `Translate the following text into ${language}:\n\n${pdfresult.text}`,
+      },
+    ]);
+
+    const audioBuffer = await textToSpeechGroq(translatedText);
+
+    return audioBuffer;
+
+  } catch (error) {
+    throw new Error("Audio generation failed: " + error.message);
+  }
+};
+
