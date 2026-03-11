@@ -4,6 +4,7 @@ import pool from "../../src/config/db.js";
 import { sendOtpEmail } from "../config/mail.js";
 import { generateOtp } from "../utils/otp.js";
 
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 /* ===================== CREATE USER ===================== */

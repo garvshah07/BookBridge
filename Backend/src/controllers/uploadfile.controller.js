@@ -1,3 +1,135 @@
+// import {
+//   UploadFile,
+//   GetAllUploadFileById,
+//   TranslatedTextToPdf,
+//   PdfToAudioService,
+//   pdfTextToSummary,
+//   pdfToQuizService
+// } from "../services/uploadfile.service.js";
+
+// export const uploadFileController = async (req, res) => {
+//   try {
+//     const user = await req.user;
+//     const fileData = await UploadFile(req.file, user);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "File uploaded successfully",
+//       data: fileData,
+//     });
+//   } catch (error) {
+//     return res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+// export const getAllUploadFileByIdController = async (req, res) => {
+//   try {
+//     const user = await req.user;
+//     const fileDataById = await GetAllUploadFileById(user);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "File uploaded successfully",
+//       data: fileDataById,
+//     });
+//   } catch (error) {
+//     return res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+// export const translatedFileController = async (req, res) => {
+//   try {
+//     const { fileId, selectedLanguage } = req.body;
+
+//     const pdfBuffer = await TranslatedTextToPdf(fileId, selectedLanguage);
+
+//     res.set({
+//       "Content-Type": "application/pdf",
+//       "Content-Disposition": 'attachment; filename="translated.pdf"',
+//     });
+
+//     return res.send(pdfBuffer);
+//   } catch (error) {
+//     return res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+
+
+// export const pdfToAudioController = async (req, res) => {
+//   try {
+//     const { fileId, selectedLanguage } = req.body;
+
+//     const audioBuffer = await PdfToAudioService(
+//       fileId,
+//       selectedLanguage
+//     );
+
+//     res.set({
+//      "Content-Type": "audio/wav",
+// "Content-Disposition": 'attachment; filename="document_audio.wav"',
+//     });
+
+//     return res.send(audioBuffer);
+//   } catch (error) {
+//     return res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+// export const pdfTextToSummaryController = async (req, res) => {
+//   try {
+//     const { fileId, selectedLanguage } = req.body;
+
+//     const pdfBuffer = await pdfTextToSummary(fileId, selectedLanguage);
+
+//     res.set({
+//       "Content-Type": "application/pdf",
+//       "Content-Disposition": 'attachment; filename="summary.pdf"',
+//     });
+
+//     return res.send(pdfBuffer);
+//   } catch (error) {
+//     return res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+
+
+// export const pdfToQuizController = async (req, res) => {
+//   try {
+//     const { fileId } = req.body;
+
+//     const quiz = await pdfToQuizService(fileId);
+
+//     return res.status(200).json({
+//       success: true,
+//       quiz,
+//     });
+
+//   } catch (error) {
+//     return res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+
 import {
   UploadFile,
   GetAllUploadFileById,
@@ -9,42 +141,48 @@ import {
 
 export const uploadFileController = async (req, res) => {
   try {
-    const user = await req.user;
-    const fileData = await UploadFile(req.file, user);
 
-    return res.status(200).json({
+    const fileData = await UploadFile(req.file, req.user);
+
+    res.status(200).json({
       success: true,
       message: "File uploaded successfully",
       data: fileData,
     });
+
   } catch (error) {
-    return res.status(400).json({
+
+    res.status(400).json({
       success: false,
       message: error.message,
     });
+
   }
 };
 
 export const getAllUploadFileByIdController = async (req, res) => {
   try {
-    const user = await req.user;
-    const fileDataById = await GetAllUploadFileById(user);
 
-    return res.status(200).json({
+    const files = await GetAllUploadFileById(req.user);
+
+    res.status(200).json({
       success: true,
-      message: "File uploaded successfully",
-      data: fileDataById,
+      data: files,
     });
+
   } catch (error) {
-    return res.status(400).json({
+
+    res.status(400).json({
       success: false,
       message: error.message,
     });
+
   }
 };
 
 export const translatedFileController = async (req, res) => {
   try {
+
     const { fileId, selectedLanguage } = req.body;
 
     const pdfBuffer = await TranslatedTextToPdf(fileId, selectedLanguage);
@@ -54,80 +192,84 @@ export const translatedFileController = async (req, res) => {
       "Content-Disposition": 'attachment; filename="translated.pdf"',
     });
 
-    return res.send(pdfBuffer);
+    res.send(pdfBuffer);
+
   } catch (error) {
-    return res.status(400).json({
+
+    res.status(400).json({
       success: false,
       message: error.message,
     });
+
   }
 };
 
-
-
 export const pdfToAudioController = async (req, res) => {
   try {
+
     const { fileId, selectedLanguage } = req.body;
 
-    const audioBuffer = await PdfToAudioService(
-      fileId,
-      selectedLanguage
-    );
+    const audio = await PdfToAudioService(fileId, selectedLanguage);
 
     res.set({
-     "Content-Type": "audio/wav",
-"Content-Disposition": 'attachment; filename="document_audio.wav"',
+      "Content-Type": "audio/wav",
+      "Content-Disposition": 'attachment; filename="document_audio.wav"',
     });
 
-    return res.send(audioBuffer);
+    res.send(audio);
+
   } catch (error) {
-    return res.status(400).json({
+
+    res.status(400).json({
       success: false,
       message: error.message,
     });
+
   }
 };
 
 export const pdfTextToSummaryController = async (req, res) => {
   try {
+
     const { fileId, selectedLanguage } = req.body;
 
-    const pdfBuffer = await pdfTextToSummary(fileId, selectedLanguage);
+    const pdf = await pdfTextToSummary(fileId, selectedLanguage);
 
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": 'attachment; filename="summary.pdf"',
     });
 
-    return res.send(pdfBuffer);
+    res.send(pdf);
+
   } catch (error) {
-    return res.status(400).json({
+
+    res.status(400).json({
       success: false,
       message: error.message,
     });
+
   }
 };
 
-
-
 export const pdfToQuizController = async (req, res) => {
   try {
+
     const { fileId } = req.body;
 
     const quiz = await pdfToQuizService(fileId);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       quiz,
     });
 
   } catch (error) {
-    return res.status(400).json({
+
+    res.status(400).json({
       success: false,
       message: error.message,
     });
+
   }
 };
-
-
-
