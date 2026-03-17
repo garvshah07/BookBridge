@@ -607,6 +607,30 @@ export const PdfToAudioService = async (fileId, language) => {
 
 /* ===================== SUMMARY ===================== */
 
+// export const pdfTextToSummary = async (id, language) => {
+
+//   const result = await pool.query(
+//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
+//     [id]
+//   );
+
+//   if (!result.rows.length) throw new Error("File not found");
+
+//   const { data, mimetype, filename } = result.rows[0];
+
+//   const text = await getTextFromFile(data, mimetype, filename);
+
+//   const summary = await processWithLLM(
+//     text,
+//     `Summarize the following text:
+
+// {{TEXT}}`
+//   );
+
+//   return await textToStructuredPDF(summary, language);
+// };
+
+
 export const pdfTextToSummary = async (id, language) => {
 
   const result = await pool.query(
@@ -620,15 +644,82 @@ export const pdfTextToSummary = async (id, language) => {
 
   const text = await getTextFromFile(data, mimetype, filename);
 
-  const summary = await processWithLLM(
-    text,
-    `Summarize the following text:
+  // 🔥 Detect content type
+  const isShortText = text.length < 800;
 
-{{TEXT}}`
-  );
+  // 🔥 Reading time
+  const words = text.split(/\s+/).length;
+  const estimatedTime = Math.max(1, Math.ceil(words / 200)) + " min";
 
-  return await textToStructuredPDF(summary, language);
+  // 🔥 Dynamic instruction
+  const modeInstruction = isShortText
+    ? "This is SHORT content. Do NOT create many chapters. Group into 1–3 meaningful sections."
+    : "This is LONG content. Split into 3–6 meaningful chapters based on topics.";
+
+  // 🔥 LLM CALL
+  const rawResponse = await groqWithFallback([
+    {
+      role: "user",
+      content: `
+You are an expert document analyzer.
+
+${modeInstruction}
+
+Return ONLY valid JSON. No markdown.
+
+FORMAT:
+{
+  "title": "Document Title",
+  "totalChapters": number,
+  "totalTime": "${estimatedTime}",
+  "chapters": [
+    {
+      "title": "Section title",
+      "time": "reading time",
+      "content": "clear explanation"
+    }
+  ]
+}
+
+RULES:
+- Do NOT hallucinate
+- Use meaningful titles (no "Introduction")
+- Keep content concise
+- Do NOT return extra text
+
+TEXT:
+${text.slice(0, 15000)}
+`
+    }
+  ]);
+
+  // 🔥 CLEAN RESPONSE
+  const cleaned = rawResponse
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  // 🔥 EXTRACT JSON
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+
+  if (!jsonMatch) {
+    throw new Error("Invalid JSON response from AI");
+  }
+
+  let parsed = JSON.parse(jsonMatch[0]);
+
+  // 🔥 SAFETY FIXES
+  if (!parsed.totalTime) {
+    parsed.totalTime = estimatedTime;
+  }
+
+  if (!parsed.totalChapters && parsed.chapters) {
+    parsed.totalChapters = parsed.chapters.length;
+  }
+
+  return parsed;
 };
+
 
 /* ===================== QUIZ ===================== */
 

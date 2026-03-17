@@ -228,21 +228,46 @@ export const pdfToAudioController = async (req, res) => {
   }
 };
 
+// export const pdfTextToSummaryController = async (req, res) => {
+//   try {
+
+//     const { fileId, selectedLanguage } = req.body;
+
+//     const pdf = await pdfTextToSummary(fileId, selectedLanguage);
+
+//     res.set({
+//       "Content-Type": "application/pdf",
+//       "Content-Disposition": 'attachment; filename="summary.pdf"',
+//     });
+
+//     res.send(pdf);
+
+//   } catch (error) {
+
+//     res.status(400).json({
+//       success: false,
+//       message: error.message,
+//     });
+
+//   }
+// };
+
+
 export const pdfTextToSummaryController = async (req, res) => {
   try {
 
     const { fileId, selectedLanguage } = req.body;
 
-    const pdf = await pdfTextToSummary(fileId, selectedLanguage);
+    const summary = await pdfTextToSummary(fileId, selectedLanguage);
 
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="summary.pdf"',
+    res.status(200).json({
+      success: true,
+      data: summary,
     });
 
-    res.send(pdf);
-
   } catch (error) {
+
+    console.error("Summary Error:", error);
 
     res.status(400).json({
       success: false,
