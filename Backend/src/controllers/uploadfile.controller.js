@@ -280,9 +280,9 @@ export const pdfTextToSummaryController = async (req, res) => {
 export const pdfToQuizController = async (req, res) => {
   try {
 
-    const { fileId } = req.body;
+    const { fileId , selectedLanguage} = req.body;
 
-    const quiz = await pdfToQuizService(fileId);
+    const quiz = await pdfToQuizService(fileId, selectedLanguage);
 
     res.status(200).json({
       success: true,

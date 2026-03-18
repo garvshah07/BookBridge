@@ -631,6 +631,95 @@ export const PdfToAudioService = async (fileId, language) => {
 // };
 
 
+// export const pdfTextToSummary = async (id, language) => {
+
+//   const result = await pool.query(
+//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
+//     [id]
+//   );
+
+//   if (!result.rows.length) throw new Error("File not found");
+
+//   const { data, mimetype, filename } = result.rows[0];
+
+//   const text = await getTextFromFile(data, mimetype, filename);
+
+//   // 🔥 Detect content type
+//   const isShortText = text.length < 800;
+
+//   // 🔥 Reading time
+//   const words = text.split(/\s+/).length;
+//   const estimatedTime = Math.max(1, Math.ceil(words / 200)) + " min";
+
+//   // 🔥 Dynamic instruction
+//   const modeInstruction = isShortText
+//     ? "This is SHORT content. Do NOT create many chapters. Group into 1–3 meaningful sections."
+//     : "This is LONG content. Split into 3–6 meaningful chapters based on topics.";
+
+//   // 🔥 LLM CALL
+//   const rawResponse = await groqWithFallback([
+//     {
+//       role: "user",
+//       content: `
+// You are an expert document analyzer.
+
+// ${modeInstruction}
+
+// Return ONLY valid JSON. No markdown.
+
+// FORMAT:
+// {
+//   "title": "Document Title",
+//   "totalChapters": number,
+//   "totalTime": "${estimatedTime}",
+//   "chapters": [
+//     {
+//       "title": "Section title",
+//       "time": "reading time",
+//       "content": "clear explanation"
+//     }
+//   ]
+// }
+
+// RULES:
+// - Do NOT hallucinate
+// - Use meaningful titles (no "Introduction")
+// - Keep content concise
+// - Do NOT return extra text
+
+// TEXT:
+// ${text.slice(0, 15000)}
+// `
+//     }
+//   ]);
+
+//   // 🔥 CLEAN RESPONSE
+//   const cleaned = rawResponse
+//     .replace(/```json/g, "")
+//     .replace(/```/g, "")
+//     .trim();
+
+//   // 🔥 EXTRACT JSON
+//   const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+
+//   if (!jsonMatch) {
+//     throw new Error("Invalid JSON response from AI");
+//   }
+
+//   let parsed = JSON.parse(jsonMatch[0]);
+
+//   // 🔥 SAFETY FIXES
+//   if (!parsed.totalTime) {
+//     parsed.totalTime = estimatedTime;
+//   }
+
+//   if (!parsed.totalChapters && parsed.chapters) {
+//     parsed.totalChapters = parsed.chapters.length;
+//   }
+
+//   return parsed;
+// };
+
 export const pdfTextToSummary = async (id, language) => {
 
   const result = await pool.query(
@@ -653,8 +742,18 @@ export const pdfTextToSummary = async (id, language) => {
 
   // 🔥 Dynamic instruction
   const modeInstruction = isShortText
-    ? "This is SHORT content. Do NOT create many chapters. Group into 1–3 meaningful sections."
+    ? "This is SHORT content. Group into 1–3 meaningful sections."
     : "This is LONG content. Split into 3–6 meaningful chapters based on topics.";
+
+  // 🔥 Language instruction (STRONG CONTROL)
+  const languageInstruction = `
+IMPORTANT:
+- Generate the entire response strictly in ${language}
+- Do NOT mix languages
+- Translate headings and content into ${language}
+- Keep technical terms, names, IDs unchanged if needed
+- If output is not fully in ${language}, regenerate internally
+`;
 
   // 🔥 LLM CALL
   const rawResponse = await groqWithFallback([
@@ -662,6 +761,8 @@ export const pdfTextToSummary = async (id, language) => {
       role: "user",
       content: `
 You are an expert document analyzer.
+
+${languageInstruction}
 
 ${modeInstruction}
 
@@ -682,10 +783,12 @@ FORMAT:
 }
 
 RULES:
+- Output language MUST be ${language}
 - Do NOT hallucinate
 - Use meaningful titles (no "Introduction")
 - Keep content concise
-- Do NOT return extra text
+- Keep JSON strictly valid
+- Do NOT return extra text outside JSON
 
 TEXT:
 ${text.slice(0, 15000)}
@@ -699,14 +802,21 @@ ${text.slice(0, 15000)}
     .replace(/```/g, "")
     .trim();
 
-  // 🔥 EXTRACT JSON
+  // 🔥 EXTRACT JSON SAFELY
   const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
 
   if (!jsonMatch) {
     throw new Error("Invalid JSON response from AI");
   }
 
-  let parsed = JSON.parse(jsonMatch[0]);
+  let parsed;
+
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch (err) {
+    console.error("JSON Parse Error:", cleaned);
+    throw new Error("AI returned invalid JSON");
+  }
 
   // 🔥 SAFETY FIXES
   if (!parsed.totalTime) {
@@ -717,13 +827,69 @@ ${text.slice(0, 15000)}
     parsed.totalChapters = parsed.chapters.length;
   }
 
+  // 🔥 FINAL FALLBACK STRUCTURE
+  if (!parsed.chapters || !Array.isArray(parsed.chapters)) {
+    parsed.chapters = [
+      {
+        title: "Summary",
+        time: estimatedTime,
+        content: text.slice(0, 500)
+      }
+    ];
+    parsed.totalChapters = 1;
+  }
+
   return parsed;
 };
 
 
 /* ===================== QUIZ ===================== */
 
-export const pdfToQuizService = async (id) => {
+// export const pdfToQuizService = async (id) => {
+
+//   const result = await pool.query(
+//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
+//     [id]
+//   );
+
+//   if (!result.rows.length) throw new Error("File not found");
+
+//   const { data, mimetype, filename } = result.rows[0];
+
+//   const text = await getTextFromFile(data, mimetype, filename);
+
+//   const res = await groqWithFallback([
+//     {
+//       role: "user",
+//       content: `
+// Create 10 MCQ questions from the following text.
+
+// Return ONLY JSON.
+
+// {
+//  "quiz":[
+//   {
+//    "question":"...",
+//    "options":["A","B","C","D"],
+//    "answer":"..."
+//   }
+//  ]
+// }
+
+// TEXT:
+// ${text}
+// `
+//     }
+//   ]);
+
+//   const json = res.match(/\{[\s\S]*\}/);
+
+//   return JSON.parse(json[0]);
+// };
+
+
+export const pdfToQuizService = async (id, language) => {
+  console.log(language)
 
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
@@ -736,31 +902,97 @@ export const pdfToQuizService = async (id) => {
 
   const text = await getTextFromFile(data, mimetype, filename);
 
-  const res = await groqWithFallback([
+  const limitedText = text.slice(0, 12000);
+
+  let processedText = limitedText;
+
+  // 🔥 STEP 1: TRANSLATE ONLY IF NEEDED
+  if (language !== "English") {
+
+    console.log("Translating to:", language);
+
+    processedText = await processWithLLM(
+      limitedText,
+      `
+Translate the following text into ${language}.
+
+RULES:
+- Keep meaning accurate
+- Do NOT add explanation
+- Return ONLY translated text
+
+TEXT:
+{{TEXT}}
+`
+    );
+  }
+
+  // 🔥 STEP 2: GENERATE QUIZ FROM FINAL TEXT
+  const rawResponse = await groqWithFallback([
     {
       role: "user",
       content: `
-Create 10 MCQ questions from the following text.
+You are an expert teacher.
 
-Return ONLY JSON.
+Generate exactly 10 MCQ questions from the given text.
 
+FORMAT (STRICT JSON ONLY):
 {
- "quiz":[
-  {
-   "question":"...",
-   "options":["A","B","C","D"],
-   "answer":"..."
-  }
- ]
+  "quiz":[
+    {
+      "question":"...",
+      "options":["...","...","...","..."],
+      "answer":"A"
+    }
+  ]
 }
 
+RULES:
+- Questions must be in ${language}
+- Options must be in ${language}
+- Answer must be A/B/C/D only
+- No explanation
+- No markdown
+- No extra text
+- JSON must be valid
+
 TEXT:
-${text}
+${processedText}
 `
     }
   ]);
 
-  const json = res.match(/\{[\s\S]*\}/);
+  // 🔥 CLEAN RESPONSE
+  const cleaned = rawResponse
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
 
-  return JSON.parse(json[0]);
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+
+  if (!jsonMatch) {
+    throw new Error("Invalid JSON response from AI");
+  }
+
+  let parsed;
+
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch (err) {
+    console.error("Quiz JSON Parse Error:", cleaned);
+    throw new Error("AI returned invalid JSON");
+  }
+
+  // 🔥 SAFETY FIX
+  if (!parsed.quiz || !Array.isArray(parsed.quiz)) {
+    throw new Error("Invalid quiz structure");
+  }
+
+  // 🔥 NORMALIZE ANSWERS
+  parsed.quiz = parsed.quiz.map(q => ({
+    ...q,
+    answer: (q.answer || "A").toString().trim().toUpperCase().charAt(0)
+  }));
+
+  return parsed;
 };
