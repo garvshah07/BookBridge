@@ -4,6 +4,8 @@ import {
   loginUser,
   verifyResetOtp,
   resetPassword,
+  userById,
+  updateUserProfile
 } from "../services/user.service.js";
 
 export const createUserController = async (req, res) => {
@@ -54,5 +56,54 @@ export const resetPasswordController = async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+
+
+export const UserByIdController = async (req, res) => {
+  try {
+    console.log(req)
+    const { id } = req.params;
+    
+
+    const userData = await userById({ id });
+
+    res.status(200).json({
+      message: "User Data Fetch Successful",
+      userData
+    });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+};
+
+
+
+export const updateProfileController = async (req, res) => {
+   try {
+    const { id } = req.params;
+    const { firstname, lastname, email } = req.body;
+
+    /// Cloudinary image URL (if uploaded)
+    const profile_image = req.file?.path || null;
+
+    const updatedUser = await updateUserProfile({
+      id,
+      firstname,
+      lastname,
+      email,
+      profile_image,
+    });
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      userData: updatedUser,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
   }
 };

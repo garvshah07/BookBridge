@@ -163,3 +163,72 @@ export const resetPassword = async ({ email, otp, password }) => {
 
   return { message: "Password reset successful" };
 };
+
+
+
+
+/* ===================== User Detail By Id ===================== */
+
+
+
+export const userById = async (userData) => {
+  try {
+    const { id } = userData;
+
+    const result = await pool.query(
+       "SELECT user_id, firstname, lastname, email, role FROM users WHERE user_id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("User not found");
+    }
+
+    const user = result.rows[0];
+
+    return user;
+  } catch (error) {
+    throw new Error("Error logging in: " + error.message);
+  }
+};
+
+
+
+/* ===================== User Update By Id ===================== */
+
+export const updateUserProfile = async (userData) => {
+  try {
+    const { id, firstname, lastname, email, profile_image } = userData;
+
+    let query = `
+      UPDATE users
+      SET firstname = $1,
+          lastname = $2,
+          email = $3
+    `;
+
+    let values = [firstname, lastname, email];
+
+    /// if image exists → include it
+    if (profile_image) {
+      query += `, profile_image = $4`;
+      values.push(profile_image);
+      values.push(id);
+    } else {
+      values.push(id);
+    }
+
+    query += ` WHERE user_id = $${values.length} RETURNING *`;
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      throw new Error("User not found");
+    }
+
+    return result.rows[0];
+
+  } catch (error) {
+    throw new Error("Error updating profile: " + error.message);
+  }
+};

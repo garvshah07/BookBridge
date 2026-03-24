@@ -5,7 +5,11 @@ import {
   loginUserController,
   resetPasswordController,
   verifyOtpController,
+  UserByIdController,
+  updateProfileController
 } from "../controllers/user.controller.js";
+
+import { upload } from "../middleware/cloudinaryUpload.js";
 
 const router = express.Router();
 
@@ -14,5 +18,11 @@ router.post("/login", loginUserController);
 router.post("/forgot-password", forgotPasswordUserController);
 router.post("/verify-otp", verifyOtpController);
 router.post("/reset-password", resetPasswordController);
+router.get("/:id", UserByIdController);
+router.put(
+  "/update-profile/:id",
+  upload.single("image"),   // 👈 same field name
+  updateProfileController
+);
 
 export default router;
