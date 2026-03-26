@@ -8,6 +8,9 @@ import {
 } from "../services/uploadfile.service.js";
 
 
+import pool from  "../config/db.js";
+
+
 
 
 
