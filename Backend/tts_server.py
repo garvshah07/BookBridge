@@ -5,7 +5,7 @@ import uuid
 
 app = Flask(__name__)
 
-# Load model ONCE (very important)
+# Load model once
 tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
 
 @app.route("/tts", methods=["POST"])
@@ -29,4 +29,5 @@ def generate_tts():
     return send_file(file_path, mimetype="audio/wav")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))  # 🔥 IMPORTANT
+    app.run(host="0.0.0.0", port=port)
