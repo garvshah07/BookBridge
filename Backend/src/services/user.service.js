@@ -176,7 +176,7 @@ export const userById = async (userData) => {
     const { id } = userData;
 
     const result = await pool.query(
-       "SELECT user_id, firstname, lastname, email, role FROM users WHERE user_id = $1",
+       "SELECT user_id, firstname, lastname, email, role, profile_image FROM users WHERE user_id = $1",
       [id]
     );
 
