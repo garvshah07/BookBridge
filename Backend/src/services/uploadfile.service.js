@@ -6,6 +6,19 @@ import textToStructuredPDF from "../utils/structuredpdf.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+
+const TTS_URL = "https://your-render-url.onrender.com/tts";
+
+function mapLanguage(lang) {
+  const map = {
+    English: "en",
+    Hindi: "hi",
+    Gujarati: "gu"
+  };
+
+  return map[lang] || "en";
+}
+
 /* ===================== MODEL FALLBACK ===================== */
 
 const MODELS = [
@@ -206,24 +219,81 @@ export const TranslatedTextToPdf = async (id, language) => {
 
 /* ===================== TEXT TO SPEECH ===================== */
 
-async function textToSpeechGroq(text) {
+// async function textToSpeechGroq(text) {
 
-  const res = await groq.audio.speech.create({
-    model: "canopylabs/orpheus-v1-english",
-    voice: "diana",
-    input: text.slice(0,2500),
-    response_format: "wav"
-  });
+//   const res = await groq.audio.speech.create({
+//     model: "canopylabs/orpheus-v1-english",
+//     voice: "diana",
+//     input: text.slice(0,2500),
+//     response_format: "wav"
+//   });
 
-  const buf = await res.arrayBuffer();
+//   const buf = await res.arrayBuffer();
 
-  return Buffer.from(buf);
+//   return Buffer.from(buf);
+// }
+
+
+
+async function textToSpeechRender(text, language) {
+
+  // 🔥 limit text (VERY IMPORTANT for render)
+  const safeText = text.slice(0, 500);
+
+  const res = await axios.post(
+    TTS_URL,
+    {
+      text: safeText,
+      lang: mapLanguage(language)
+    },
+    {
+      responseType: "arraybuffer",
+      timeout: 60000
+    }
+  );
+
+  return Buffer.from(res.data);
 }
 
 /* ===================== AUDIO ===================== */
 
+// export const PdfToAudioService = async (fileId, language) => {
+
+//   const result = await pool.query(
+//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
+//     [fileId]
+//   );
+
+//   if (!result.rows.length) throw new Error("File not found");
+
+//   const { data, mimetype, filename } = result.rows[0];
+
+//   const text = await getTextFromFile(data, mimetype, filename);
+
+//   const translated = await processWithLLM(
+//     text,
+//     `Translate the following text into ${language}:
+
+// {{TEXT}}`
+//   );
+
+//   return await textToSpeechGroq(translated);
+// };
+
 export const PdfToAudioService = async (fileId, language) => {
 
+  // ✅ CHECK CACHE FIRST
+  const existing = await pool.query(
+    `SELECT output_data FROM file_outputs
+     WHERE file_id=$1 AND operation_type='audio' AND language=$2`,
+    [fileId, language]
+  );
+
+  if (existing.rows.length) {
+    return existing.rows[0].output_data;
+  }
+
+  // 🔽 ORIGINAL FLOW (unchanged)
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
     [fileId]
@@ -242,10 +312,11 @@ export const PdfToAudioService = async (fileId, language) => {
 {{TEXT}}`
   );
 
-  return await textToSpeechGroq(translated);
+  // 🔥 REPLACE THIS LINE
+  const audioBuffer = await textToSpeechRender(translated, language);
+
+  return audioBuffer;
 };
-
-
 
 export const pdfTextToSummary = async (id, language) => {
 

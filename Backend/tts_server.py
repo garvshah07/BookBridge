@@ -29,5 +29,6 @@ def generate_tts():
     return send_file(file_path, mimetype="audio/wav")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # 🔥 IMPORTANT
+    port = int(os.environ.get("PORT", 10000))  # 🔥 use 10000 fallback
+    print(f"Starting server on port {port}")   # ✅ debug log
     app.run(host="0.0.0.0", port=port)
