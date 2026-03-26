@@ -301,12 +301,40 @@ export const PdfToAudioService = async (fileId, language) => {
 
   const text = await getTextFromFile(data, mimetype, filename);
 
-  const translated = await processWithLLM(
-    text,
-    `Translate the following text into ${language}:
 
-{{TEXT}}`
-  );
+
+//   const translated = await processWithLLM(
+//     text,
+//     `Translate the following text into ${language}:
+
+// {{TEXT}}`
+//   );
+
+const translated = await processWithLLM(
+  text,
+  `
+You are a strict translation engine.
+
+TASK:
+Translate the given text into ${language}.
+
+RULES:
+- Return ONLY translated text
+- DO NOT add explanation
+- DO NOT add headings
+- DO NOT add "This is translation"
+- DO NOT summarize
+- DO NOT change structure
+- Keep same formatting and line breaks
+- Keep names, numbers, IDs unchanged
+
+OUTPUT:
+Return only translated text.
+
+TEXT:
+{{TEXT}}
+`
+);
 
   // 🔥 REPLACE THIS LINE
   const audioBuffer = await textToSpeechRender(translated, language);
