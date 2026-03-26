@@ -276,9 +276,76 @@ async function textToSpeechRender(text, language) {
 //   return await textToSpeechGroq(translated);
 // };
 
+// export const PdfToAudioService = async (fileId, language) => {
+
+//   // ✅ CHECK CACHE FIRST
+//   const existing = await pool.query(
+//     `SELECT output_data FROM file_outputs
+//      WHERE file_id=$1 AND operation_type='audio' AND language=$2`,
+//     [fileId, language]
+//   );
+
+//   if (existing.rows.length) {
+//     return existing.rows[0].output_data;
+//   }
+
+//   // 🔽 ORIGINAL FLOW (unchanged)
+//   const result = await pool.query(
+//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
+//     [fileId]
+//   );
+
+//   if (!result.rows.length) throw new Error("File not found");
+
+//   const { data, mimetype, filename } = result.rows[0];
+
+//   const text = await getTextFromFile(data, mimetype, filename);
+
+
+
+// //   const translated = await processWithLLM(
+// //     text,
+// //     `Translate the following text into ${language}:
+
+// // {{TEXT}}`
+// //   );
+
+// const translated = await processWithLLM(
+//   text,
+//   `
+// You are a strict translation engine.
+
+// TASK:
+// Translate the given text into ${language}.
+
+// RULES:
+// - Return ONLY translated text
+// - DO NOT add explanation
+// - DO NOT add headings
+// - DO NOT add "This is translation"
+// - DO NOT summarize
+// - DO NOT change structure
+// - Keep same formatting and line breaks
+// - Keep names, numbers, IDs unchanged
+
+// OUTPUT:
+// Return only translated text.
+
+// TEXT:
+// {{TEXT}}
+// `
+// );
+
+//   // 🔥 REPLACE THIS LINE
+//   const audioBuffer = await textToSpeechRender(translated, language);
+
+//   return audioBuffer;
+// };
+
+
 export const PdfToAudioService = async (fileId, language) => {
 
-  // ✅ CHECK CACHE FIRST
+  // ✅ CACHE
   const existing = await pool.query(
     `SELECT output_data FROM file_outputs
      WHERE file_id=$1 AND operation_type='audio' AND language=$2`,
@@ -289,7 +356,7 @@ export const PdfToAudioService = async (fileId, language) => {
     return existing.rows[0].output_data;
   }
 
-  // 🔽 ORIGINAL FLOW (unchanged)
+  // 📄 GET FILE
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
     [fileId]
@@ -301,46 +368,54 @@ export const PdfToAudioService = async (fileId, language) => {
 
   const text = await getTextFromFile(data, mimetype, filename);
 
-
-
-//   const translated = await processWithLLM(
-//     text,
-//     `Translate the following text into ${language}:
-
-// {{TEXT}}`
-//   );
-
-const translated = await processWithLLM(
-  text,
-  `
+  // 🔥 STRICT TRANSLATION
+  let translated = await processWithLLM(
+    text,
+    `
 You are a strict translation engine.
 
 TASK:
-Translate the given text into ${language}.
+Translate the text into ${language}.
 
 RULES:
 - Return ONLY translated text
-- DO NOT add explanation
-- DO NOT add headings
-- DO NOT add "This is translation"
-- DO NOT summarize
-- DO NOT change structure
-- Keep same formatting and line breaks
-- Keep names, numbers, IDs unchanged
-
-OUTPUT:
-Return only translated text.
+- NO explanation
+- NO headings
+- Keep structure same
 
 TEXT:
 {{TEXT}}
 `
-);
+  );
 
-  // 🔥 REPLACE THIS LINE
-  const audioBuffer = await textToSpeechRender(translated, language);
+  // 🔥 GUJARATI FIX
+  let ttsLanguage = language;
+
+  if (language === "Gujarati") {
+    translated = await processWithLLM(
+      translated,
+      `
+Convert this Gujarati text into Hindi phonetic pronunciation.
+
+RULES:
+- Use Hindi script
+- Natural pronunciation
+- NO extra text
+
+TEXT:
+{{TEXT}}
+`
+    );
+
+    ttsLanguage = "Hindi";
+  }
+
+  // 🔊 GENERATE AUDIO
+  const audioBuffer = await textToSpeechRender(translated, ttsLanguage);
 
   return audioBuffer;
 };
+
 
 export const pdfTextToSummary = async (id, language) => {
 
