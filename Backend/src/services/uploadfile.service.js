@@ -2,22 +2,15 @@ import pool from "../../src/config/db.js";
 import { SmartPDFParser } from "pdf-parse-new";
 import Groq from "groq-sdk";
 import textToStructuredPDF from "../utils/structuredpdf.js";
+import axios from "axios";
 
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
-const TTS_URL = "https://your-render-url.onrender.com/tts";
+const TTS_URL = "https://bookbridge-nlkz.onrender.com/tts";
 
-function mapLanguage(lang) {
-  const map = {
-    English: "en",
-    Hindi: "hi",
-    Gujarati: "gu"
-  };
 
-  return map[lang] || "en";
-}
 
 /* ===================== MODEL FALLBACK ===================== */
 
@@ -234,25 +227,28 @@ export const TranslatedTextToPdf = async (id, language) => {
 // }
 
 
-
 async function textToSpeechRender(text, language) {
+  try {
+    const safeText = text.slice(0, 500); // keep for now
 
-  // 🔥 limit text (VERY IMPORTANT for render)
-  const safeText = text.slice(0, 500);
+    const res = await axios.post(
+      TTS_URL,
+      {
+        text: safeText,
+        language: language // ✅ FIXED
+      },
+      {
+        responseType: "arraybuffer",
+        timeout: 60000
+      }
+    );
 
-  const res = await axios.post(
-    TTS_URL,
-    {
-      text: safeText,
-      lang: mapLanguage(language)
-    },
-    {
-      responseType: "arraybuffer",
-      timeout: 60000
-    }
-  );
+    return Buffer.from(res.data);
 
-  return Buffer.from(res.data);
+  } catch (error) {
+    console.error("❌ TTS ERROR:", error.message);
+    throw new Error("TTS failed");
+  }
 }
 
 /* ===================== AUDIO ===================== */
