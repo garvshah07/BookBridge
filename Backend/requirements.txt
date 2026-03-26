@@ -1,5 +1,5 @@
 TTS==0.22.0
 flask
-gunicorn
 soundfile
 numpy
+gunicorn
