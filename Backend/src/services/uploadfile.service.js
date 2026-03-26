@@ -3,6 +3,7 @@ import { SmartPDFParser } from "pdf-parse-new";
 import Groq from "groq-sdk";
 import textToStructuredPDF from "../utils/structuredpdf.js";
 
+
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 /* ===================== MODEL FALLBACK ===================== */
@@ -140,6 +141,9 @@ async function processWithLLM(text, prompt) {
 
   return output;
 }
+
+
+
 
 /* ===================== UPLOAD FILE ===================== */
 
