@@ -1,52 +1,48 @@
 from flask import Flask, request, send_file
-from TTS.api import TTS
+import io
 import os
-import uuid
+
+print("🚀 Flask starting...")
 
 app = Flask(__name__)
 
-# 🔥 DO NOT LOAD MODEL HERE
+# ✅ Fix for Coqui license
+os.environ["COQUI_TOS_AGREED"] = "1"
+
+# ❗ Lazy load model (VERY IMPORTANT)
 tts = None
 
-def get_tts():
+def load_model():
     global tts
     if tts is None:
-        print("Loading TTS model...")
+        print("🔄 Loading TTS model...")
+        from TTS.api import TTS
         tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
-        print("TTS model loaded ✅")
-    return tts
 
-
+# ✅ Health route (Render needs this)
 @app.route("/")
 def home():
-    return {"status": "running"}  # 🔥 health check for Render
+    return {"status": "running"}
 
-
+# ✅ TTS route
 @app.route("/tts", methods=["POST"])
-def generate_tts():
+def tts_api():
+    load_model()
+
     data = request.json
-    text = data.get("text")
-    lang = data.get("lang", "en")
+    text = data.get("text", "")
 
-    if not text:
-        return {"error": "Text required"}, 400
+    wav = tts.tts(text=text)
 
-    # 🔥 load model ONLY when needed
-    tts_model = get_tts()
+    buffer = io.BytesIO()
+    import soundfile as sf
+    sf.write(buffer, wav, 22050, format="WAV")
+    buffer.seek(0)
 
-    file_name = f"{uuid.uuid4()}.wav"
-    file_path = os.path.join("/tmp", file_name)
-
-    tts_model.tts_to_file(
-        text=text,
-        file_path=file_path,
-        language=lang
-    )
-
-    return send_file(file_path, mimetype="audio/wav")
+    return send_file(buffer, mimetype="audio/wav")
 
 
+# ✅ Force port binding (backup for Render)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"Starting server on port {port}...")
     app.run(host="0.0.0.0", port=port)
