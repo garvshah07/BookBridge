@@ -251,97 +251,6 @@ async function textToSpeechRender(text, language) {
   }
 }
 
-/* ===================== AUDIO ===================== */
-
-// export const PdfToAudioService = async (fileId, language) => {
-
-//   const result = await pool.query(
-//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
-//     [fileId]
-//   );
-
-//   if (!result.rows.length) throw new Error("File not found");
-
-//   const { data, mimetype, filename } = result.rows[0];
-
-//   const text = await getTextFromFile(data, mimetype, filename);
-
-//   const translated = await processWithLLM(
-//     text,
-//     `Translate the following text into ${language}:
-
-// {{TEXT}}`
-//   );
-
-//   return await textToSpeechGroq(translated);
-// };
-
-// export const PdfToAudioService = async (fileId, language) => {
-
-//   // ✅ CHECK CACHE FIRST
-//   const existing = await pool.query(
-//     `SELECT output_data FROM file_outputs
-//      WHERE file_id=$1 AND operation_type='audio' AND language=$2`,
-//     [fileId, language]
-//   );
-
-//   if (existing.rows.length) {
-//     return existing.rows[0].output_data;
-//   }
-
-//   // 🔽 ORIGINAL FLOW (unchanged)
-//   const result = await pool.query(
-//     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
-//     [fileId]
-//   );
-
-//   if (!result.rows.length) throw new Error("File not found");
-
-//   const { data, mimetype, filename } = result.rows[0];
-
-//   const text = await getTextFromFile(data, mimetype, filename);
-
-
-
-// //   const translated = await processWithLLM(
-// //     text,
-// //     `Translate the following text into ${language}:
-
-// // {{TEXT}}`
-// //   );
-
-// const translated = await processWithLLM(
-//   text,
-//   `
-// You are a strict translation engine.
-
-// TASK:
-// Translate the given text into ${language}.
-
-// RULES:
-// - Return ONLY translated text
-// - DO NOT add explanation
-// - DO NOT add headings
-// - DO NOT add "This is translation"
-// - DO NOT summarize
-// - DO NOT change structure
-// - Keep same formatting and line breaks
-// - Keep names, numbers, IDs unchanged
-
-// OUTPUT:
-// Return only translated text.
-
-// TEXT:
-// {{TEXT}}
-// `
-// );
-
-//   // 🔥 REPLACE THIS LINE
-//   const audioBuffer = await textToSpeechRender(translated, language);
-
-//   return audioBuffer;
-// };
-
 
 export const PdfToAudioService = async (fileId, language) => {
 
@@ -543,8 +452,7 @@ ${text.slice(0, 15000)}
 /* ===================== QUIZ ===================== */
 
 export const pdfToQuizService = async (id, language) => {
-  console.log(language)
-
+ 
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
     [id]
@@ -650,3 +558,22 @@ ${processedText}
 
   return parsed;
 };
+
+
+
+
+
+export const deleteFileById = async (file_id) => {
+
+const result = await pool.query(
+    `DELETE FROM table_name WHERE file_id=$1`,
+    [file_id]
+  );
+
+
+  if (!result.rows.length) throw new Error("File not found to delete");
+
+
+   return { message: "File deleted successfully" };
+
+}

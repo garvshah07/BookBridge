@@ -4,7 +4,8 @@ import {
   TranslatedTextToPdf,
   PdfToAudioService,
   pdfTextToSummary,
-  pdfToQuizService
+  pdfToQuizService,
+  deleteFileById
 } from "../services/uploadfile.service.js";
 
 
@@ -223,6 +224,34 @@ export const pdfToQuizController = async (req, res) => {
     res.status(200).json({
       success: true,
       quiz,
+    });
+
+  } catch (error) {
+
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+
+
+
+export const deleteFileByIdController = async (req, res) => {
+  try {
+
+    const { fileId } = req.params;
+
+    const deletedfile = await deleteFileById(fileId);
+
+
+    res.status(200).json({
+      success: true,
+      deletedfile,
     });
 
   } catch (error) {
