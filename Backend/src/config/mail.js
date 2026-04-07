@@ -77,7 +77,7 @@ export const sendOtpEmail = async (to, otp) => {
     console.log("Email sent:", info.response);
 
   } catch (error) {
-    console.error("GMAIL SMTP ERROR:", error.message);
-    throw new Error("Email service unavailable");
-  }
+  console.error("GMAIL ERROR FULL:", error);
+  throw new Error(error.message);
+}
 };
