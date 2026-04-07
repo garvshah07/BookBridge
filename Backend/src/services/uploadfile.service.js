@@ -565,15 +565,14 @@ ${processedText}
 
 export const deleteFileById = async (file_id) => {
 
-const result = await pool.query(
-    `DELETE FROM table_name WHERE file_id=$1`,
+  const result = await pool.query(
+    `DELETE FROM files WHERE file_id=$1 RETURNING *`,
     [file_id]
   );
 
+  if (!result.rows.length) {
+    throw new Error("File not found to delete");
+  }
 
-  if (!result.rows.length) throw new Error("File not found to delete");
-
-
-   return { message: "File deleted successfully" };
-
-}
+  return { message: "File deleted successfully" };
+};

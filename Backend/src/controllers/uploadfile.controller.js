@@ -244,9 +244,11 @@ export const pdfToQuizController = async (req, res) => {
 export const deleteFileByIdController = async (req, res) => {
   try {
 
-    const { fileId } = req.params;
+    const { fileid } = req.params;
 
-    const deletedfile = await deleteFileById(fileId);
+    
+
+    const deletedfile = await deleteFileById(fileid);
 
 
     res.status(200).json({

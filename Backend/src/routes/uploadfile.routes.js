@@ -23,6 +23,6 @@ router.post("/translate/summary", pdfTextToSummaryController);
 router.post("/translate/quiz", pdfToQuizController);
 router.get("/file/:fileId/outputs", getFileOutputsController);
 router.get("/output/:outputId", getOutputByIdController);
-router.post("delete/:fileid", deleteFileByIdController);
+router.post("/delete/:fileid", deleteFileByIdController);
 
 export default router;
