@@ -27,6 +27,6 @@ router.put(
   updateProfileController
 );
 router.delete("/delete/:id", deleteUserByIdController);
-router.get("/users", getAllUsersController);
+router.get("/", getAllUsersController);
 
 export default router;
