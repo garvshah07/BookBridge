@@ -5,7 +5,8 @@ import {
   PdfToAudioService,
   pdfTextToSummary,
   pdfToQuizService,
-  deleteFileById
+  deleteFileById,
+  getAllFiles
 } from "../services/uploadfile.service.js";
 
 
@@ -237,7 +238,6 @@ export const pdfToQuizController = async (req, res) => {
 };
 
 
-
 export const deleteFileByIdController = async (req, res) => {
   try {
 
@@ -259,3 +259,18 @@ export const deleteFileByIdController = async (req, res) => {
 
   }
 };
+
+
+ export const getAllFilesController = async (req, res) => {
+   try {
+     const files = await getAllFiles();  
+     res.status(200).json({
+       message: "Files fetched successfully",
+       files
+     });
+   } catch (error) {
+     res.status(500).json({
+       error: error.message,
+     });
+   }
+ };

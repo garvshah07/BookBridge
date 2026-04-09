@@ -8,10 +8,6 @@ import axios from "axios";
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
-const TTS_URL = "https://bookbridge-nlkz.onrender.com/tts";
-
-
-
 /* ===================== MODEL FALLBACK ===================== */
 
 const MODELS = [
@@ -210,29 +206,13 @@ export const TranslatedTextToPdf = async (id, language) => {
   return await textToStructuredPDF(translated, language);
 };
 
-/* ===================== TEXT TO SPEECH ===================== */
-
-// async function textToSpeechGroq(text) {
-
-//   const res = await groq.audio.speech.create({
-//     model: "canopylabs/orpheus-v1-english",
-//     voice: "diana",
-//     input: text.slice(0,2500),
-//     response_format: "wav"
-//   });
-
-//   const buf = await res.arrayBuffer();
-
-//   return Buffer.from(buf);
-// }
-
 
 async function textToSpeechRender(text, language) {
   try {
     const safeText = text.slice(0, 500); // keep for now
 
     const res = await axios.post(
-      TTS_URL,
+      process.env.TTS_URL,
       {
         text: safeText,
         language: language // ✅ FIXED
@@ -560,9 +540,6 @@ ${processedText}
 };
 
 
-
-
-
 export const deleteFileById = async (file_id) => {
 
   const result = await pool.query(
@@ -575,4 +552,23 @@ export const deleteFileById = async (file_id) => {
   }
 
   return { message: "File deleted successfully" };
+};
+
+
+export const getAllFiles = async () => {
+  try {
+    const result = await pool.query(
+       "SELECT * FROM files"
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("No files found");
+    }
+
+    const files = result.rows;
+
+    return files;
+  } catch (error) {
+    throw new Error("Error fetching files: " + error.message);
+  }
 };

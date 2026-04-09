@@ -8,7 +8,8 @@ import {
   pdfToQuizController,
   getFileOutputsController,
   getOutputByIdController,
-  deleteFileByIdController
+  deleteFileByIdController,
+  getAllFilesController
 } from "../controllers/uploadfile.controller.js";
 
 import upload from "../config/multer.js";
@@ -24,5 +25,6 @@ router.post("/translate/quiz", pdfToQuizController);
 router.get("/file/:fileId/outputs", getFileOutputsController);
 router.get("/output/:outputId", getOutputByIdController);
 router.post("/delete/:fileid", deleteFileByIdController);
+router.get("/", getAllFilesController);
 
 export default router;
