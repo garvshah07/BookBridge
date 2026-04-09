@@ -6,7 +6,9 @@ import {
   resetPasswordController,
   verifyOtpController,
   UserByIdController,
-  updateProfileController
+  updateProfileController,
+  deleteUserByIdController,
+  getAllUsersController
 } from "../controllers/user.controller.js";
 
 import { upload } from "../middleware/cloudinaryUpload.js";
@@ -24,5 +26,7 @@ router.put(
   upload.single("image"),   // 👈 same field name
   updateProfileController
 );
+router.delete("/delete/:id", deleteUserByIdController);
+router.get("/users", getAllUsersController);
 
 export default router;

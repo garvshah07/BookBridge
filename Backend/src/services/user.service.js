@@ -232,3 +232,61 @@ export const updateUserProfile = async (userData) => {
     throw new Error("Error updating profile: " + error.message);
   }
 };
+
+
+
+/* ===================== User Delete By Id ===================== */
+
+
+export const deleteUserById = async (userData) => {
+  try {
+    const { id } = userData;
+
+
+    const result = await pool.query(
+      "SELECT *  FROM users WHERE user_id = $1",
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("User not found");
+    }
+
+
+    let query = `DELETE FROM users WHERE user_id = $1 RETURNING *`;
+
+      const deleteResult = await pool.query(query, [id]);
+
+    
+
+    return deleteResult.rows[0];
+
+  } catch (error) {
+    throw new Error("Error deleting user: " + error.message);
+  }
+};
+
+
+
+
+
+/* ===================== Get All Users ===================== */
+
+
+export const getAllUsers = async () => {
+  try {
+    const result = await pool.query(
+       "SELECT * FROM users"
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("No users found");
+    }
+
+    const users = result.rows;
+
+    return users;
+  } catch (error) {
+    throw new Error("Error logging in: " + error.message);
+  }
+};

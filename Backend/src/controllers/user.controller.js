@@ -5,7 +5,9 @@ import {
   verifyResetOtp,
   resetPassword,
   userById,
-  updateUserProfile
+  updateUserProfile,
+  deleteUserById,
+  getAllUsers
 } from "../services/user.service.js";
 
 export const createUserController = async (req, res) => {
@@ -59,8 +61,6 @@ export const resetPasswordController = async (req, res) => {
   }
 };
 
-
-
 export const UserByIdController = async (req, res) => {
   try {
     console.log(req)
@@ -77,7 +77,6 @@ export const UserByIdController = async (req, res) => {
     res.status(401).json({ error: error.message });
   }
 };
-
 
 
 export const updateProfileController = async (req, res) => {
@@ -101,6 +100,41 @@ export const updateProfileController = async (req, res) => {
       userData: updatedUser,
     });
 
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+
+export const deleteUserByIdController = async (req, res) => {
+   try {
+    const { id } = req.params;
+
+    const deletedUser = await deleteUserById({ id });
+
+    res.status(200).json({
+      message: "User deleted successfully",
+      userData: deletedUser,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+}
+
+
+
+export const getAllUsersController = async (req, res) => {
+  try {
+    const users = await getAllUsers();  
+    res.status(200).json({
+      message: "Users fetched successfully",
+      users
+    });
   } catch (error) {
     res.status(500).json({
       error: error.message,
