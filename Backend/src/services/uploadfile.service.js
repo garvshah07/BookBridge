@@ -572,3 +572,55 @@ export const getAllFiles = async () => {
     throw new Error("Error fetching files: " + error.message);
   }
 };
+
+
+/* ===================== ADMIN: FILE OUTPUTS ===================== */
+
+export const getAllFileOutputsAdmin = async ({ limit = 50, offset = 0 } = {}) => {
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+  const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+
+  const result = await pool.query(
+    `
+    SELECT
+      fo.output_id,
+      fo.file_id,
+      fo.user_id,
+      fo.operation_type,
+      fo.language,
+      fo.created_at,
+      (fo.output_data IS NOT NULL) AS has_data,
+      (fo.output_json IS NOT NULL) AS has_json,
+      f.filename,
+      f.mimetype,
+      u.email,
+      u.firstname,
+      u.lastname
+    FROM file_outputs fo
+    LEFT JOIN files f ON f.file_id = fo.file_id
+    LEFT JOIN users u ON u.user_id = fo.user_id
+    ORDER BY fo.created_at DESC
+    LIMIT $1 OFFSET $2
+    `,
+    [safeLimit, safeOffset]
+  );
+
+  return result.rows;
+};
+
+
+export const deleteFileOutputById = async (outputId) => {
+  const id = parseInt(outputId, 10);
+  if (!id) throw new Error("Invalid outputId");
+
+  const result = await pool.query(
+    `DELETE FROM file_outputs WHERE output_id=$1 RETURNING output_id`,
+    [id]
+  );
+
+  if (!result.rows.length) {
+    throw new Error("Output not found to delete");
+  }
+
+  return { message: "Output deleted successfully", output_id: result.rows[0].output_id };
+};

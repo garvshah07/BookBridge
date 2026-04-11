@@ -8,6 +8,8 @@ import {
   pdfToQuizController,
   getFileOutputsController,
   getOutputByIdController,
+  getAllFileOutputsAdminController,
+  deleteFileOutputByIdController,
   deleteFileByIdController,
   getAllFilesController
 } from "../controllers/uploadfile.controller.js";
@@ -23,7 +25,9 @@ router.post("/translate/audio", pdfToAudioController);
 router.post("/translate/summary", pdfTextToSummaryController);
 router.post("/translate/quiz", pdfToQuizController);
 router.get("/file/:fileId/outputs", getFileOutputsController);
+router.get("/admin/outputs", getAllFileOutputsAdminController);
 router.get("/output/:outputId", getOutputByIdController);
+router.delete("/output/:outputId", deleteFileOutputByIdController);
 router.post("/delete/:fileid", deleteFileByIdController);
 router.get("/", getAllFilesController);
 

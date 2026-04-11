@@ -6,7 +6,9 @@ import {
   pdfTextToSummary,
   pdfToQuizService,
   deleteFileById,
-  getAllFiles
+  getAllFiles,
+  getAllFileOutputsAdmin,
+  deleteFileOutputById
 } from "../services/uploadfile.service.js";
 
 
@@ -59,8 +61,21 @@ export const getOutputByIdController = async (req, res) => {
       return res.status(404).json({ message: "Not found" });
     }
 
+    const isAdmin = (req.user?.role || "").toString().toLowerCase() === "admin";
+    if (!isAdmin && output.user_id !== req.user.userId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     // PDF / AUDIO
     if (output.output_data) {
+      if (output.operation_type === "translate") {
+        res.set({ "Content-Type": "application/pdf" });
+      } else if (output.operation_type === "audio") {
+        res.set({ "Content-Type": "audio/wav" });
+      } else {
+        res.set({ "Content-Type": "application/octet-stream" });
+      }
+
       res.send(output.output_data);
     } else {
       res.json({
@@ -68,6 +83,54 @@ export const getOutputByIdController = async (req, res) => {
         data: output.output_json
       });
     }
+
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+export const getAllFileOutputsAdminController = async (req, res) => {
+  try {
+    const isAdmin = (req.user?.role || "").toString().toLowerCase() === "admin";
+    if (!isAdmin) {
+      return res.status(403).json({ message: "Admin only" });
+    }
+
+    const { limit, offset } = req.query;
+    const outputs = await getAllFileOutputsAdmin({ limit, offset });
+
+    res.status(200).json({
+      success: true,
+      data: outputs
+    });
+
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+export const deleteFileOutputByIdController = async (req, res) => {
+  try {
+    const isAdmin = (req.user?.role || "").toString().toLowerCase() === "admin";
+    if (!isAdmin) {
+      return res.status(403).json({ message: "Admin only" });
+    }
+
+    const { outputId } = req.params;
+    const deleted = await deleteFileOutputById(outputId);
+
+    res.status(200).json({
+      success: true,
+      ...deleted
+    });
 
   } catch (error) {
     res.status(400).json({
