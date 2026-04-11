@@ -15,7 +15,7 @@ const allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:5173",
   "https://book-bridge-sage.vercel.app",
-  "https://bridgebook-kappa.vercel.app/dashboard"
+  "https://bridgebook-kappa.vercel.app"
 ];
 
 app.use(
