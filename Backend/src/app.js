@@ -15,7 +15,7 @@ const allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:5173",
   "https://book-bridge-sage.vercel.app",
-  "https://bookbridge-chi.vercel.app/"
+  "https://bookbridge-chi.vercel.app"
 ];
 ``
 app.use(
