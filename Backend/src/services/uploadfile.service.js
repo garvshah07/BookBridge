@@ -59,7 +59,8 @@ async function extractTextFromImage(buffer, mimetype = "image/png") {
   const base64 = buffer.toString("base64");
 
   const res = await groq.chat.completions.create({
-    model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    // model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    model: "qwen/qwen3.8-27b",
     messages: [
       {
         role: "user",
