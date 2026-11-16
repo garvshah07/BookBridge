@@ -4,16 +4,22 @@ import Groq from "groq-sdk";
 import textToStructuredPDF from "../utils/structuredpdf.js";
 import axios from "axios";
 
-
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 
 /* ===================== MODEL FALLBACK ===================== */
 
 const MODELS = [
-  "llama-3.3-70b-versatile",
-  "qwen/qwen3-32b",
-  "openai/gpt-oss-20b"
+  // <--- previous models --->
+
+  // "llama-3.3-70b-versatile",
+  // "qwen/qwen3-32b",
+  // "openai/gpt-oss-20b"
+
+  // <--- new models --->
+
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b",
 ];
 
 async function groqWithFallback(messages) {
@@ -24,11 +30,10 @@ async function groqWithFallback(messages) {
       const res = await groq.chat.completions.create({
         model,
         messages,
-        temperature: 0
+        temperature: 0,
       });
 
       return res.choices[0].message.content;
-
     } catch (err) {
       lastError = err;
     }
@@ -40,7 +45,6 @@ async function groqWithFallback(messages) {
 /* ===================== TEXT CHUNK ===================== */
 
 function splitText(text, size = 2000) {
-
   const chunks = [];
 
   for (let i = 0; i < text.length; i += size) {
@@ -52,7 +56,6 @@ function splitText(text, size = 2000) {
 
 /* ===================== IMAGE → TEXT (VISION MODEL) ===================== */
 async function extractTextFromImage(buffer, mimetype = "image/png") {
-
   const base64 = buffer.toString("base64");
 
   const res = await groq.chat.completions.create({
@@ -63,17 +66,17 @@ async function extractTextFromImage(buffer, mimetype = "image/png") {
         content: [
           {
             type: "text",
-            text: "Extract all readable text from this image. Return only the text."
+            text: "Extract all readable text from this image. Return only the text.",
           },
           {
             type: "image_url",
             image_url: {
-              url: `data:${mimetype};base64,${base64}`
-            }
-          }
-        ]
-      }
-    ]
+              url: `data:${mimetype};base64,${base64}`,
+            },
+          },
+        ],
+      },
+    ],
   });
 
   return res.choices[0].message.content;
@@ -81,14 +84,12 @@ async function extractTextFromImage(buffer, mimetype = "image/png") {
 
 /* ===================== UNIVERSAL TEXT EXTRACTION ===================== */
 
-async function getTextFromFile(buffer, mimetype, filename="") {
-
+async function getTextFromFile(buffer, mimetype, filename = "") {
   const type = mimetype?.toLowerCase();
 
   /* ---------- PDF ---------- */
 
   if (type === "application/pdf" || filename.endsWith(".pdf")) {
-
     const parser = new SmartPDFParser();
     const pdf = await parser.parse(buffer);
 
@@ -97,45 +98,35 @@ async function getTextFromFile(buffer, mimetype, filename="") {
 
   /* ---------- IMAGE ---------- */
 
-  if (
-    type?.startsWith("image/") ||
-    filename.match(/\.(jpg|jpeg|png|webp)$/i)
-  ) {
-
-    return await extractTextFromImage(buffer , mimetype);
+  if (type?.startsWith("image/") || filename.match(/\.(jpg|jpeg|png|webp)$/i)) {
+    return await extractTextFromImage(buffer, mimetype);
   }
 
   /* ---------- FALLBACK ---------- */
 
   try {
-
     const parser = new SmartPDFParser();
     const pdf = await parser.parse(buffer);
 
     return pdf.text;
-
   } catch {
-
-    return await extractTextFromImage(buffer , mimetype);
-
+    return await extractTextFromImage(buffer, mimetype);
   }
 }
 
 /* ===================== LLM PROCESSOR ===================== */
 
 async function processWithLLM(text, prompt) {
-
   const chunks = splitText(text);
 
   let output = "";
 
   for (const chunk of chunks) {
-
     const res = await groqWithFallback([
       {
         role: "user",
-        content: prompt.replace("{{TEXT}}", chunk)
-      }
+        content: prompt.replace("{{TEXT}}", chunk),
+      },
     ]);
 
     output += res + "\n";
@@ -144,13 +135,9 @@ async function processWithLLM(text, prompt) {
   return output;
 }
 
-
-
-
 /* ===================== UPLOAD FILE ===================== */
 
 export const UploadFile = async (file, user) => {
-
   if (!file) throw new Error("No file received");
 
   const { userId } = user;
@@ -160,7 +147,7 @@ export const UploadFile = async (file, user) => {
     `INSERT INTO files (filename,mimetype,data,user_id)
      VALUES ($1,$2,$3,$4)
      RETURNING file_id`,
-    [originalname, mimetype, buffer, userId]
+    [originalname, mimetype, buffer, userId],
   );
 
   return result.rows[0];
@@ -169,13 +156,12 @@ export const UploadFile = async (file, user) => {
 /* ===================== GET USER FILES ===================== */
 
 export const GetAllUploadFileById = async (user) => {
-
   const result = await pool.query(
     `SELECT file_id,filename,mimetype,created_at
      FROM files
      WHERE user_id=$1
      ORDER BY created_at DESC`,
-    [user.userId]
+    [user.userId],
   );
 
   return result.rows;
@@ -184,10 +170,9 @@ export const GetAllUploadFileById = async (user) => {
 /* ===================== TRANSLATE ===================== */
 
 export const TranslatedTextToPdf = async (id, language) => {
-
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
-    [id]
+    [id],
   );
 
   if (!result.rows.length) throw new Error("File not found");
@@ -200,12 +185,11 @@ export const TranslatedTextToPdf = async (id, language) => {
     text,
     `Translate the following text into ${language}:
 
-{{TEXT}}`
+{{TEXT}}`,
   );
 
   return await textToStructuredPDF(translated, language);
 };
-
 
 async function textToSpeechRender(text, language) {
   try {
@@ -215,30 +199,27 @@ async function textToSpeechRender(text, language) {
       process.env.TTS_URL,
       {
         text: safeText,
-        language: language // ✅ FIXED
+        language: language, // ✅ FIXED
       },
       {
         responseType: "arraybuffer",
-        timeout: 60000
-      }
+        timeout: 60000,
+      },
     );
 
     return Buffer.from(res.data);
-
   } catch (error) {
     console.error("❌ TTS ERROR:", error.message);
     throw new Error("TTS failed");
   }
 }
 
-
 export const PdfToAudioService = async (fileId, language) => {
-
   // ✅ CACHE
   const existing = await pool.query(
     `SELECT output_data FROM file_outputs
      WHERE file_id=$1 AND operation_type='audio' AND language=$2`,
-    [fileId, language]
+    [fileId, language],
   );
 
   if (existing.rows.length) {
@@ -248,7 +229,7 @@ export const PdfToAudioService = async (fileId, language) => {
   // 📄 GET FILE
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
-    [fileId]
+    [fileId],
   );
 
   if (!result.rows.length) throw new Error("File not found");
@@ -274,7 +255,7 @@ RULES:
 
 TEXT:
 {{TEXT}}
-`
+`,
   );
 
   // 🔥 GUJARATI FIX
@@ -293,7 +274,7 @@ RULES:
 
 TEXT:
 {{TEXT}}
-`
+`,
     );
 
     ttsLanguage = "Hindi";
@@ -305,12 +286,10 @@ TEXT:
   return audioBuffer;
 };
 
-
 export const pdfTextToSummary = async (id, language) => {
-
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
-    [id]
+    [id],
   );
 
   if (!result.rows.length) throw new Error("File not found");
@@ -378,8 +357,8 @@ RULES:
 
 TEXT:
 ${text.slice(0, 15000)}
-`
-    }
+`,
+    },
   ]);
 
   // 🔥 CLEAN RESPONSE
@@ -419,8 +398,8 @@ ${text.slice(0, 15000)}
       {
         title: "Summary",
         time: estimatedTime,
-        content: text.slice(0, 500)
-      }
+        content: text.slice(0, 500),
+      },
     ];
     parsed.totalChapters = 1;
   }
@@ -428,14 +407,12 @@ ${text.slice(0, 15000)}
   return parsed;
 };
 
-
 /* ===================== QUIZ ===================== */
 
 export const pdfToQuizService = async (id, language) => {
- 
   const result = await pool.query(
     `SELECT data,mimetype,filename FROM files WHERE file_id=$1`,
-    [id]
+    [id],
   );
 
   if (!result.rows.length) throw new Error("File not found");
@@ -450,7 +427,6 @@ export const pdfToQuizService = async (id, language) => {
 
   // 🔥 STEP 1: TRANSLATE ONLY IF NEEDED
   if (language !== "English") {
-
     console.log("Translating to:", language);
 
     processedText = await processWithLLM(
@@ -465,7 +441,7 @@ RULES:
 
 TEXT:
 {{TEXT}}
-`
+`,
     );
   }
 
@@ -500,8 +476,8 @@ RULES:
 
 TEXT:
 ${processedText}
-`
-    }
+`,
+    },
   ]);
 
   // 🔥 CLEAN RESPONSE
@@ -531,20 +507,18 @@ ${processedText}
   }
 
   // 🔥 NORMALIZE ANSWERS
-  parsed.quiz = parsed.quiz.map(q => ({
+  parsed.quiz = parsed.quiz.map((q) => ({
     ...q,
-    answer: (q.answer || "A").toString().trim().toUpperCase().charAt(0)
+    answer: (q.answer || "A").toString().trim().toUpperCase().charAt(0),
   }));
 
   return parsed;
 };
 
-
 export const deleteFileById = async (file_id) => {
-
   const result = await pool.query(
     `DELETE FROM files WHERE file_id=$1 RETURNING *`,
-    [file_id]
+    [file_id],
   );
 
   if (!result.rows.length) {
@@ -554,12 +528,9 @@ export const deleteFileById = async (file_id) => {
   return { message: "File deleted successfully" };
 };
 
-
 export const getAllFiles = async () => {
   try {
-    const result = await pool.query(
-       "SELECT * FROM files"
-    );
+    const result = await pool.query("SELECT * FROM files");
 
     if (result.rows.length === 0) {
       throw new Error("No files found");
@@ -573,10 +544,12 @@ export const getAllFiles = async () => {
   }
 };
 
-
 /* ===================== ADMIN: FILE OUTPUTS ===================== */
 
-export const getAllFileOutputsAdmin = async ({ limit = 50, offset = 0 } = {}) => {
+export const getAllFileOutputsAdmin = async ({
+  limit = 50,
+  offset = 0,
+} = {}) => {
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
   const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
 
@@ -602,12 +575,11 @@ export const getAllFileOutputsAdmin = async ({ limit = 50, offset = 0 } = {}) =>
     ORDER BY fo.created_at DESC
     LIMIT $1 OFFSET $2
     `,
-    [safeLimit, safeOffset]
+    [safeLimit, safeOffset],
   );
 
   return result.rows;
 };
-
 
 export const deleteFileOutputById = async (outputId) => {
   const id = parseInt(outputId, 10);
@@ -615,12 +587,15 @@ export const deleteFileOutputById = async (outputId) => {
 
   const result = await pool.query(
     `DELETE FROM file_outputs WHERE output_id=$1 RETURNING output_id`,
-    [id]
+    [id],
   );
 
   if (!result.rows.length) {
     throw new Error("Output not found to delete");
   }
 
-  return { message: "Output deleted successfully", output_id: result.rows[0].output_id };
+  return {
+    message: "Output deleted successfully",
+    output_id: result.rows[0].output_id,
+  };
 };
